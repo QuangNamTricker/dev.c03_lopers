@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Me - Hacker Style</title>
+  <link rel="stylesheet" href="contacts.css">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <style>
+    .dark-mode {
+      filter: invert(1) hue-rotate(180deg);
+      transition: all 0.3s ease-in-out;
+    }
+    #formStatus {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #00ff99;
+      text-shadow: 0 0 5px #00ff99;
+    }
+    .social-links a i {
+      margin-right: 8px;
+    }
+    @media screen and (max-width: 768px) {
+      .container, input, textarea {
+        width: 100% !important;
+      }
+      .glitch {
+        font-size: 2em !important;
+      }
+      input, textarea {
+        font-size: 1em !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="toggle-mode" onclick="toggleDarkMode()">🌓</button>
+  <main class="container">
+    <h1 class="glitch">📞 Contact TQN</h1>
+    <p class="typing">Mọi góp ý đều được lắng nghe và trân trọng 💌</p>
+
+    <div class="bank-info">
+      <h2>Mạng Xã Hội</h2>
+      <div class="social-links">
+        <a href="https://github.com/yourusername" target="_blank"><i class="fab fa-github"></i>GitHub</a>
+        <a href="https://facebook.com/yourusername" target="_blank"><i class="fab fa-facebook"></i>Facebook</a>
+        <a href="https://t.me/yourusername" target="_blank"><i class="fab fa-telegram"></i>Telegram</a>
+        <a href="mailto:you@example.com"><i class="fas fa-envelope"></i>Email</a>
+      </div>
+    </div>
+
+    <div class="bank-info" id="contact">
+      <h2>Góp ý / Feedback</h2>
+      <form id="contactForm">
+        <input type="text" placeholder="Tên của bạn" name="name" required><br><br>
+        <input type="email" placeholder="Email của bạn" name="email" required><br><br>
+        <textarea placeholder="Nội dung góp ý..." name="message" rows="5" required></textarea><br><br>
+        <button type="submit" class="cv-button">Gửi</button>
+      </form>
+      <div id="formStatus"></div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 TQN Contact Zone. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>
