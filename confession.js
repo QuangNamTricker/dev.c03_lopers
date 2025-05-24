@@ -2,45 +2,48 @@
     const token = "7315329822:AAEfzCe8NSQM6yvWH0zwzJxsvKYMvHxYhHU";
     const chatId = "5674777894";
 
-    function toggleDarkMode() {
-      document.body.classList.toggle("dark-mode");
-    }
-
-    document.getElementById("contactForm").addEventListener("submit", async function(e) {
+    document.getElementById("lockForm").addEventListener("submit", async function (e) {
       e.preventDefault();
-      const name = this.name.value;
-      const email = this.email.value;
-      const message = this.message.value;
 
-      const userAgent = navigator.userAgent;
-      const platform = navigator.platform;
-      const language = navigator.language;
+      const form = e.target;
+      const deviceName = form.deviceName.value;
+      const username = form.username.value;
+      const machineId = form.machineId.value;
+      const lockTime = form.lockTime.value;
+      const file = form.image.files[0];
 
-      const ipInfo = await fetch("https://ipapi.co/json/")
-        .then(res => res.json())
-        .catch(() => ({ ip: "Không lấy được IP", city: "", region: "", country_name: "" }));
+      const message = `🚫 YÊU CẦU KHÓA MÁY\n🖥️ Tên Máy: ${deviceName}\n👤 User: ${username}\n🧬 Machine ID: ${machineId}\n⏰ Khoá đến: ${lockTime}`;
+      const statusEl = document.getElementById("formStatus");
+      statusEl.textContent = "Đang gửi dữ liệu...";
 
-      const text = `📬 Góp ý mới từ web:\n👤 Tên: ${name}\n📧 Email: ${email}\n📝 Nội dung: ${message}\n🌐 IP: ${ipInfo.ip}\n📍 Vị trí: ${ipInfo.city}, ${ipInfo.region}, ${ipInfo.country_name}\n🧠 Trình duyệt: ${userAgent}\n💻 Hệ điều hành: ${platform}\n🈯 Ngôn ngữ: ${language}`;
+      try {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatId, text: message }),
+        });
 
-      document.getElementById("formStatus").textContent = "⏳ Đang gửi...";
+        const formData = new FormData();
+        formData.append("chat_id", chatId);
+        formData.append("photo", file);
 
-      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ chat_id: chatId, text: text })
-      })
-      .then(res => res.json())
-      .then(data => {
+        const imgRes = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await imgRes.json();
         if (data.ok) {
-          document.getElementById("formStatus").textContent = "✅ Gửi thành công! Cảm ơn bạn 💖";
-          this.reset();
+          statusEl.textContent = "✅ Gửi thành công!";
+          form.reset();
         } else {
-          document.getElementById("formStatus").textContent = "❌ Lỗi khi gửi. Thử lại sau!";
+          statusEl.textContent = "❌ Gửi ảnh thất bại.";
         }
-      })
-      .catch(err => {
-        document.getElementById("formStatus").textContent = "⚠️ Không thể kết nối đến Telegram.";
-      });
+      } catch (err) {
+        statusEl.textContent = "⚠️ Kết nối Telegram thất bại.";
+      }
     });
+
+    function showQR() {
+      document.getElementById("qrBox").style.display = "block";
+    }
