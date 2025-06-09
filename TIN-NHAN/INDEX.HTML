@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Bảo Mật</title>
+    <style>
+        /* Reset CSS và chống selection */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        
+        /* Lớp bảo vệ chống chụp màn hình */
+        .anti-screenshot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9998;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.05),
+                rgba(0, 0, 0, 0.05) 1px,
+                transparent 1px,
+                transparent 5px
+            );
+            animation: flicker 0.1s infinite;
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 0.95; }
+            50% { opacity: 1; }
+            100% { opacity: 0.95; }
+        }
+        
+        /* Gallery style */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .image-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        
+        .image-container:hover {
+            transform: scale(1.02);
+        }
+        
+        .protected-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: opacity 0.5s;
+            opacity: 0;
+        }
+        
+        .image-loaded {
+            opacity: 1;
+        }
+        
+        .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 20px;
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+        
+        .image-container:hover .image-overlay {
+            transform: translateY(0);
+        }
+        
+        /* Watermark */
+        .watermark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" opacity="0.05"><text x="50" y="50" font-family="Arial" font-size="20" fill="white" transform="rotate(-45 100,100)">BẢN QUYỀN © 2023</text></svg>');
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        /* Fullscreen view */
+        .fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .fullscreen-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .fullscreen-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .fullscreen-overlay.active .fullscreen-image {
+            transform: scale(1);
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            background: rgba(0,0,0,0.5);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            outline: none;
+        }
+        
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            background: rgba(0,0,0,0.5);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            outline: none;
+            z-index: 1;
+        }
+        
+        .prev-btn {
+            left: 20px;
+        }
+        
+        .next-btn {
+            right: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Lớp bảo vệ chống chụp màn hình -->
+    <div class="anti-screenshot"></div>
+    
+    <header style="text-align: center; padding: 30px 0; background: #111;">
+        <h1>GALLERY ĐỘC QUYỀN</h1>
+        <p>Ảnh được bảo vệ - Không cho phép sao chép hoặc lưu</p>
+    </header>
+    
+    <div class="gallery">
+        <!-- Ảnh sẽ được thêm bằng JavaScript -->
+    </div>
+
+    <!-- Fullscreen view -->
+    <div class="fullscreen-overlay">
+        <button class="close-btn">&times;</button>
+        <button class="nav-btn prev-btn">&lt;</button>
+        <button class="nav-btn next-btn">&gt;</button>
+        <img class="fullscreen-image" src="" alt="Fullscreen image">
+    </div>
+
+    <script>
+        // Danh sách ảnh
+        const images = [
+            { src: './NQN/1.PNG', title: 'Ảnh 1', desc: 'Mô tả ảnh 1' },
+            { src: './NQN/2.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/3.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/4.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/5.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/6.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/7.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/8.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/9.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/10.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/11.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/12.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/13.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/14.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/15.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/16.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/17.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/18.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/19.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/20.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/21.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/22.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/23.PNG', title: 'Ảnh ', desc: 'Mô tả ảnh ' },
+            { src: './NQN/1.jpg', title: 'Ảnh 3', desc: 'Mô tả ảnh 3' },
+            { src: './NQN/2.jpg', title: 'Ảnh 3', desc: 'Mô tả ảnh 3' }
+            // Thêm ảnh của bạn ở đây
+        ];
+        
+        // Biến toàn cục
+        let currentImageIndex = 0;
+        const fullscreenOverlay = document.querySelector('.fullscreen-overlay');
+        const fullscreenImage = document.querySelector('.fullscreen-image');
+        const closeBtn = document.querySelector('.close-btn');
+        const prevBtn = document.querySelector('.prev-btn');
+        const nextBtn = document.querySelector('.next-btn');
+        
+        // Chống sao chép, chụp màn hình
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Chống click phải
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                showAlert('Không cho phép menu chuột phải');
+                return false;
+            });
+            
+            // 2. Chống phím tắt
+            document.addEventListener('keydown', function(e) {
+                // Chặn Ctrl+C, Ctrl+V, Ctrl+S, Ctrl+P, Ctrl+U, F12
+                if (e.ctrlKey || e.keyCode === 123) {
+                    e.preventDefault();
+                    showAlert('Tính năng này đã bị vô hiệu hóa');
+                    return false;
+                }
+                
+                // ESC để đóng fullscreen
+                if (e.key === 'Escape' && fullscreenOverlay.classList.contains('active')) {
+                    closeFullscreen();
+                }
+                
+                // Mũi tên để chuyển ảnh
+                if (fullscreenOverlay.classList.contains('active')) {
+                    if (e.key === 'ArrowLeft') {
+                        showPrevImage();
+                    } else if (e.key === 'ArrowRight') {
+                        showNextImage();
+                    }
+                }
+            });
+            
+            // 3. Chống kéo thả ảnh
+            document.addEventListener('dragstart', function(e) {
+                if (e.target.tagName === 'IMG') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // 4. Chống chụp màn hình (cách đơn giản)
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    showAlert('Phát hiện hành vi đáng ngờ');
+                }
+            });
+            
+            // 5. Tải và hiển thị ảnh
+            const gallery = document.querySelector('.gallery');
+            
+            images.forEach((img, index) => {
+                const container = document.createElement('div');
+                container.className = 'image-container';
+                container.dataset.index = index;
+                
+                const imgElement = document.createElement('img');
+                imgElement.className = 'protected-image';
+                imgElement.dataset.src = img.src; // Sử dụng data-src để lazy load
+                imgElement.alt = img.title;
+                
+                // Thêm watermark
+                const watermark = document.createElement('div');
+                watermark.className = 'watermark';
+                
+                const overlay = document.createElement('div');
+                overlay.className = 'image-overlay';
+                overlay.innerHTML = `<h3>${img.title}</h3><p>${img.desc}</p>`;
+                
+                container.appendChild(imgElement);
+                container.appendChild(watermark);
+                container.appendChild(overlay);
+                gallery.appendChild(container);
+                
+                // Lazy load ảnh
+                loadImage(imgElement);
+                
+                // Sự kiện click để mở fullscreen
+                container.addEventListener('click', function() {
+                    openFullscreen(index);
+                });
+            });
+            
+            // 6. Chống in trang
+            window.onbeforeprint = function() {
+                showAlert('Không cho phép in ảnh từ trang web này');
+                return false;
+            };
+            
+            // 7. Chống chụp màn hình trên mobile (cách đơn giản)
+            document.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 1) {
+                    e.preventDefault();
+                    showAlert('Không cho phép thao tác đa điểm');
+                }
+            }, { passive: false });
+            
+            // 8. Chống chụp màn hình bằng cách phát hiện thay đổi kích thước
+            let lastWidth = window.innerWidth;
+            let lastHeight = window.innerHeight;
+            
+            window.addEventListener('resize', function() {
+                if (window.innerWidth !== lastWidth || window.innerHeight !== lastHeight) {
+                    showAlert('Phát hiện hành vi đáng ngờ');
+                }
+                lastWidth = window.innerWidth;
+                lastHeight = window.innerHeight;
+            });
+            
+            // Sự kiện cho nút đóng fullscreen
+            closeBtn.addEventListener('click', closeFullscreen);
+            
+            // Sự kiện cho nút chuyển ảnh
+            prevBtn.addEventListener('click', showPrevImage);
+            nextBtn.addEventListener('click', showNextImage);
+        });
+        
+        // Hiển thị cảnh báo
+        function showAlert(message) {
+            alert(message);
+            // Có thể thay bằng modal đẹp hơn
+        }
+        
+        // Lazy load ảnh
+        function loadImage(img) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const lazyImage = entry.target;
+                        lazyImage.src = lazyImage.dataset.src;
+                        lazyImage.onload = () => {
+                            lazyImage.classList.add('image-loaded');
+                        };
+                        observer.unobserve(lazyImage);
+                    }
+                });
+            });
+            
+            observer.observe(img);
+        }
+        
+        // Mở fullscreen
+        function openFullscreen(index) {
+            currentImageIndex = index;
+            fullscreenImage.src = images[index].src;
+            fullscreenOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Chống scroll
+        }
+        
+        // Đóng fullscreen
+        function closeFullscreen() {
+            fullscreenOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Hiển thị ảnh trước
+        function showPrevImage() {
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            fullscreenImage.src = images[currentImageIndex].src;
+        }
+        
+        // Hiển thị ảnh tiếp theo
+        function showNextImage() {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            fullscreenImage.src = images[currentImageIndex].src;
+        }
+        
+        // Chống console
+        console.log = function() {};
+        console.warn = function() {};
+        console.error = function() {};
+        if (typeof console.clear === 'function') {
+            console.clear();
+        }
+    </script>
+</body>
+</html>
